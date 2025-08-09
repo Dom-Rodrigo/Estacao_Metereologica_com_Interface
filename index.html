@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Leituras dos Sensores: AHT10 & BMP280</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    canvas {
+      max-width: 600px;
+      margin: 30px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Leituras dos Sensores</h1>
+
+  <h2>BMP280 - Temperatura & Pressão</h2>
+  <canvas id="bmpChart"></canvas>
+
+  <h2>AHT10 - Temperatura & Humidade</h2>
+  <canvas id="ahtChart"></canvas>
+
+  <script>
+    const labels = [];
+
+    const bmpChart = new Chart(document.getElementById('bmpChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Temperatura BMP280 (°C)',
+            data: [],
+            borderColor: 'green',
+            fill: false
+          },
+          {
+            label: 'Pressão (kPa)',
+            data: [],
+            borderColor: 'orange',
+            fill: false
+          }
+        ]
+      },
+      options: { responsive: true }
+    });
+
+    const ahtChart = new Chart(document.getElementById('ahtChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Temperatura AHT10 (°C)',
+            data: [],
+            borderColor: 'red',
+            fill: false
+          },
+          {
+            label: 'Humidade (%)',
+            data: [],
+            borderColor: 'blue',
+            fill: false
+          }
+        ]
+      },
+      options: { responsive: true }
+    });
+
+    function atualizar() {
+      fetch('/estado').then(res => res.json()).then(data => {
+        const now = new Date().toLocaleTimeString();
+
+        if (labels.length >= 20) {
+          labels.shift();
+          bmpChart.data.datasets.forEach(ds => ds.data.shift());
+          ahtChart.data.datasets.forEach(ds => ds.data.shift());
+        }
+
+        labels.push(now);
+
+        // Extrai apenas números
+        const tempBMP = parseFloat(data.temp);
+        const presBMP = parseFloat(data.pres);
+        const tempAHT = parseFloat(data.atemp);
+        const humAHT  = parseFloat(data.ahum);
+
+        // Atualiza BMP280
+        bmpChart.data.datasets[0].data.push(tempBMP);
+        bmpChart.data.datasets[1].data.push(presBMP);
+
+        // Atualiza AHT10
+        ahtChart.data.datasets[0].data.push(tempAHT);
+        ahtChart.data.datasets[1].data.push(humAHT);
+
+        bmpChart.update();
+        ahtChart.update();
+      });
+    }
+
+    setInterval(atualizar, 2000);
+  </script>
+
+</body>
+</html>
