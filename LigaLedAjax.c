@@ -20,8 +20,8 @@
 #define JOYSTICK_X 26
 #define JOYSTICK_Y 27
 
-#define WIFI_SSID "COMMON-C24Q1"
-#define WIFI_PASS "aabb142536"
+#define WIFI_SSID "RODRIGO "
+#define WIFI_PASS "05131620"
 
 
 #define I2C_PORT i2c0               // i2c0 pinos 0 e 1, i2c1 pinos 2 e 3
@@ -401,6 +401,7 @@ int main()
         {
             printf("Erro na leitura do AHT10!\n\n\n");
         }
+        printf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
         sprintf(str_tmp1, "%.1fC", temperature / 100.0);  // Converte o inteiro em string
         sprintf(str_alt, "%.0fm", altitude);  // Converte o inteiro em string
