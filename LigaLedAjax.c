@@ -12,6 +12,9 @@
 #include "ssd1306.h"
 #include "font.h"
 #include <math.h>
+#include "hardware/clocks.h"
+#include "hardware/timer.h"
+#include "hardware/pwm.h"
 
 
 #define LED_PIN 12
@@ -20,8 +23,8 @@
 #define JOYSTICK_X 26
 #define JOYSTICK_Y 27
 
-#define WIFI_SSID "RODRIGO "
-#define WIFI_PASS "05131620"
+#define WIFI_SSID "SSID"
+#define WIFI_PASS "senha"
 
 
 #define I2C_PORT i2c0               // i2c0 pinos 0 e 1, i2c1 pinos 2 e 3
@@ -33,6 +36,10 @@
 #define I2C_SDA_DISP 14
 #define I2C_SCL_DISP 15
 #define endereco 0x3C
+
+#define BUZZER_PIN 10
+// Configuração da frequência do buzzer (em Hz)
+#define BUZZER_FREQUENCY 100
 
 const char HTML_BODY[] =
 "<!DOCTYPE html>\n"
@@ -304,12 +311,35 @@ void gpio_irq_handler(uint gpio, uint32_t events)
     reset_usb_boot(0, 0);
 }
 
+// Definição de uma função para inicializar o PWM no pino do buzzer
+void pwm_init_buzzer(uint pin)
+{
+    // Configurar o pino como saída de PWM
+    gpio_set_function(pin, GPIO_FUNC_PWM);
+
+    // Obter o slice do PWM associado ao pino
+    uint slice_num = pwm_gpio_to_slice_num(pin);
+
+    // Configurar o PWM com frequência desejada
+    pwm_config config = pwm_get_default_config();
+    pwm_config_set_clkdiv(&config, clock_get_hz(clk_sys) / (BUZZER_FREQUENCY * 4096)); // Divisor de clock
+    pwm_init(slice_num, &config, true);
+
+    // Iniciar o PWM no nível baixo
+    pwm_set_gpio_level(pin, 0);
+}
+
 int main()
 {
     gpio_init(BOTAO_B);
     gpio_set_dir(BOTAO_B, GPIO_IN);
     gpio_pull_up(BOTAO_B);
     gpio_set_irq_enabled_with_callback(BOTAO_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+
+    // === CONFIGURAÇÃO DOS BUZZER === 
+    gpio_init(BUZZER_PIN);
+    gpio_set_dir(BUZZER_PIN, GPIO_OUT);
+    pwm_init_buzzer(BUZZER_PIN);
 
     stdio_init_all();
     sleep_ms(2000);
@@ -369,6 +399,8 @@ int main()
     ssd1306_draw_string(&ssd, ip_str, 0, 10);
     ssd1306_send_data(&ssd);
 
+    sleep_ms(2000);
+
     start_http_server();
  
     char str_x[5]; // Buffer para armazenar a string
@@ -402,6 +434,15 @@ int main()
             printf("Erro na leitura do AHT10!\n\n\n");
         }
         printf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+
+        if (data.temperature >= 25){
+            uint slice_num = pwm_gpio_to_slice_num(BUZZER_PIN);
+            pwm_set_gpio_level(BUZZER_PIN, 2048);
+        }
+        else{
+            pwm_set_gpio_level(BUZZER_PIN, 0);
+
+        }
 
         sprintf(str_tmp1, "%.1fC", temperature / 100.0);  // Converte o inteiro em string
         sprintf(str_alt, "%.0fm", altitude);  // Converte o inteiro em string

@@ -39,6 +39,9 @@ target_link_libraries(${PROJECT_NAME}
         hardware_i2c
         hardware_adc        
         pico_cyw43_arch_lwip_threadsafe_background
+        hardware_pwm
+        hardware_clocks
+        hardware_timer
         )
 
 target_include_directories(${PROJECT_NAME}  PRIVATE   ${CMAKE_CURRENT_LIST_DIR} )

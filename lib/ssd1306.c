@@ -1,5 +1,6 @@
 #include "ssd1306.h"
 #include "font.h"
+#include <string.h>
 
 void ssd1306_init(ssd1306_t *ssd, uint8_t width, uint8_t height, bool external_vcc, uint8_t address, i2c_inst_t *i2c) {
   ssd->width = width;
@@ -197,4 +198,17 @@ void ssd1306_draw_string(ssd1306_t *ssd, const char *str, uint8_t x, uint8_t y)
       break;
     }
   }
+}
+
+void ssd1306_draw_bitmap(ssd1306_t *ssd, const uint8_t *bitmap) {
+    // for (int i = 0; i < ssd->bufsize - 1; i++) {
+    //     ssd->ram_buffer[i + 1] = bitmap[i];
+
+    //     ssd1306_send_data(ssd);
+    // }
+    // Copy bitmap into display RAM buffer
+    memcpy(&ssd->ram_buffer[1], bitmap, ssd->bufsize - 1);
+
+    // Send it in a single transaction
+    ssd1306_send_data(ssd);
 }
